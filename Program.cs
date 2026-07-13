@@ -22,7 +22,7 @@ namespace NorthWaveConsole
             order1.AddItem(new OrderItem("Server Rack Unit", 450.00m, 7));
 
             order1.AddItem(new OrderItem("Laptop", 70.00m, 2));
-
+            /////////////
             var order2 = new Order("", Layer.Employee);
 
             service.ProcessOrder(order1);
