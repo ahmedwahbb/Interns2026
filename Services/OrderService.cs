@@ -1,47 +1,90 @@
 using System;
 using System.IO;
-using NorthWaveConsole.Enum;
 using NorthWaveConsole.Models;
 
 namespace NorthWaveConsole.Services
 {
-
+   
     public class OrderService
     {
         private static int _nextId = 1;
-        private readonly Validation _validator;
-        private readonly PricingOrder _pricingService;
-        private readonly SaveOrder _repository;
-        private readonly NotifyOrder _notificationService;
-        private readonly LoggerOrder _logger;
-        public OrderService(Validation validator, PricingOrder pricingService, SaveOrder repository, NotifyOrder notificationService, LoggerOrder logger)
+
+        public decimal CalculateTotal(Order o)
         {
-            _validator = validator;
-            _pricingService = pricingService;
-            _repository = repository;
-            _notificationService = notificationService;
-            _logger = logger;
+            decimal total = 0;
+            for (int i = 0; i < o.Items.Count; i++)
+            {
+                total = total + (o.Items[i].Price * o.Items[i].Qty);
+            }
+
+
+            if (o.CustomerType == "VIP")
+            {
+                total = total * 0.8m;
+            }
+            else if (o.CustomerType == "Wholesale")
+            {
+                total = total * 0.85m;
+            }
+            else if (o.CustomerType == "Employee")
+            {
+                total = total * 0.5m;
+            }
+            else
+            {
+            }
+
+            o.Total = total;
+            return total;
         }
 
         public void ProcessOrder(Order o)
         {
-            if (!_validator.IsValid(o))
-                return;
-
-            o.SetId(_nextId++);
-            o.SetStatus(Status.New);
-            decimal total = _pricingService.CalculateTotal(o);
-            o.SetTotal(total);
-
-            try
+            
+            if (o.Items.Count > 0)
             {
-                _repository.Save(o);
-                _notificationService.SendOrderConfirmation(o);
-                _logger.Log("Order processed: " + o.Id);
+                if (o.CustomerName != null)
+                {
+                    if (o.CustomerName != "")
+                    {
+                        o.Id = _nextId;
+                        _nextId = _nextId + 1;
+                        o.Status = "New";
+
+                        CalculateTotal(o);
+
+                        try
+                        {
+                            SaveToFile(o);
+                            SendConfirmationEmail(o);
+                            LogToFile("Order processed: " + o.Id);
+                        }
+                        catch (Exception)
+                        {
+                          
+                        }
+                    }
+                }
             }
-            catch (Exception)
-            {
-            }
+        }
+
+        private void SaveToFile(Order o)
+        {
+           
+            File.AppendAllText("orders.txt",
+                $"{o.Id},{o.CustomerName},{o.CustomerType},{o.Total},{o.Status}{Environment.NewLine}");
+        }
+
+        private void SendConfirmationEmail(Order o)
+        {
+           
+            Console.WriteLine($"[EMAIL] To: {o.CustomerName} - Your order #{o.Id} totalling {o.Total:C} was received.");
+        }
+
+        private void LogToFile(string message)
+        {
+            
+            File.AppendAllText("app.log", $"{DateTime.Now}: {message}{Environment.NewLine}");
         }
     }
 }
