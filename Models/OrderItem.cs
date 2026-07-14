@@ -1,9 +1,16 @@
 namespace NorthWaveConsole.Models
 {
-    public class OrderItem
+  public class OrderItem
+  {
+    public string ProductName {get; }
+    public decimal Price {get; }
+    public int Qty {get; }
+
+    public OrderItem(string productName, decimal price, int qty)
     {
-        public string ProductName;
-        public decimal Price;
-        public int Qty;
+      ProductName = productName;
+      Price = price;
+      Qty = qty;
     }
+  }
 }
