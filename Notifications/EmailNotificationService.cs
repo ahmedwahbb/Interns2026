@@ -1,13 +1,13 @@
 using NorthWaveConsole.Models;
 using NorthWaveConsole.Repository;
 
-namespace NorthWaveConsole.Services
+namespace NorthWaveConsole.Notifications
 {
   public class EmailNotificationService : INotificationService
   {
     public void SendOrderConfirmation(Order order)
     {
-      Console.WriteLine($"[EMAIL] To: {order.CustomerName} - " + $"Your order #{order.Id} totalling {order.Total:C} was received.");
+      Console.WriteLine($"[EMAIL] To: {order.Customer.Name} - " + $"Your order #{order.Id} totalling {order.Total:C} was received.");
     }
   }
 }

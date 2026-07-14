@@ -9,7 +9,7 @@ namespace NorthWaveConsole.Services
     {
       decimal total = order.Subtotal;
 
-      switch (order.CustomerType)
+      switch (order.Customer.Type)
       {
         case CustomerType.VIP:
           total *= 0.8m;

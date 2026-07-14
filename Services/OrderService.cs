@@ -1,5 +1,7 @@
 using NorthWaveConsole.Enums;
+using NorthWaveConsole.Logging;
 using NorthWaveConsole.Models;
+using NorthWaveConsole.Notifications;
 using NorthWaveConsole.Repository;
 
 namespace NorthWaveConsole.Services
@@ -12,8 +14,8 @@ namespace NorthWaveConsole.Services
     private readonly OrderPricingService _pricingService;
     private readonly IOrderRepository _repository;
     private readonly INotificationService _notificationService;
-    private readonly ILogger _logger;
-    public OrderService(OrderValidator validator, OrderPricingService pricingService, IOrderRepository repository, INotificationService notificationService,  ILogger logger)
+    private readonly IAppLogger _logger;
+    public OrderService(OrderValidator validator, OrderPricingService pricingService, IOrderRepository repository, INotificationService notificationService,  IAppLogger logger)
     {
       _validator = validator;
       _pricingService = pricingService;
@@ -22,24 +24,29 @@ namespace NorthWaveConsole.Services
       _logger = logger;
     }
 
-    public void ProcessOrder(Order o)
+    public void ProcessOrder(Order order)
     {
-      if (!_validator.IsValid(o))
+      var validationResult = _validator.Validate(order);
+      if (!validationResult.IsValid)
+      {
+        _logger.Log(validationResult.ErrorMessage);
         return;
+      }
           
-      o.SetId(_nextId++);
-      o.SetStatus(OrderStatus.New);
-      decimal total = _pricingService.CalculateTotal(o);
-      o.SetTotal(total);
+      order.SetId(_nextId++);
+      order.SetStatus(OrderStatus.New);
+      decimal total = _pricingService.CalculateTotal(order);
+      order.SetTotal(total);
 
       try
       {
-        _repository.Save(o);
-        _notificationService.SendOrderConfirmation(o);
-        _logger.Log("Order processed: " + o.Id);
+        _repository.Save(order);
+        _notificationService.SendOrderConfirmation(order);
+        _logger.Log("Order processed: " + order.Id);
       }
-      catch (Exception)
-      {              
+      catch (Exception ex)
+      {
+        _logger.Log($"Failed to process order {order.Id}: {ex}");
       }   
     }
   }

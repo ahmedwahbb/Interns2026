@@ -5,18 +5,18 @@ namespace NorthWaveConsole.Services
 {
   public class OrderValidator
   {
-    public bool IsValid(Order order)
+    public ValidationResult Validate(Order order)
     {
-      if (order == null)
-        return false;
+    if (order.Customer == null)
+      return new ValidationResult(false, "Customer is required.");
 
-      if (string.IsNullOrWhiteSpace(order.CustomerName))
-        return false;
+    if (string.IsNullOrWhiteSpace(order.Customer.Name))
+      return new ValidationResult(false, "Customer name is required.");
 
-      if (order.Items.Count == 0)
-        return false;
+    if (!order.Items.Any())
+      return new ValidationResult(false, "Order must contain at least one item.");
 
-      return true;
+    return new ValidationResult(true);
     }
   }
 }

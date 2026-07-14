@@ -1,8 +1,8 @@
 using NorthWaveConsole.Repository;
 
-namespace NorthWaveConsole.Services
+namespace NorthWaveConsole.Logging
 {
-  public class FileLogger : ILogger
+  public class FileLogger : IAppLogger
   {
     public void Log(string message)
     {

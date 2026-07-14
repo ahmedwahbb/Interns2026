@@ -3,21 +3,18 @@ using NorthWaveConsole.Enums;
 
 namespace NorthWaveConsole.Models
 {
-  public class Order
+  public class Order : BaseEntity
   {
-    public int Id { get; private set; }
-    public string CustomerName { get; private set; }
-    public CustomerType CustomerType { get; private set; }
+    public Customer Customer { get; }
     private readonly List<OrderItem> _items = new();
     public IReadOnlyCollection<OrderItem> Items => _items;
     public OrderStatus Status { get; private set; }
     public decimal Total { get; private set; }
     public decimal Subtotal => _items.Sum(item => item.Price * item.Qty);
 
-    public Order(string customerName, CustomerType customerType)
+    public Order(Customer customer)
     {
-      CustomerName = customerName;
-      CustomerType = customerType;
+      Customer = customer;
       Status = OrderStatus.New;
     }
 

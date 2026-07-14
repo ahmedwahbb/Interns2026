@@ -1,6 +1,6 @@
 using NorthWaveConsole.Models;
 
-namespace NorthWaveConsole.Repository
+namespace NorthWaveConsole.Notifications
 {
   public interface INotificationService
   {
