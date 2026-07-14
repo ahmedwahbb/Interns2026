@@ -16,7 +16,7 @@ namespace NorthWaveConsole.Services
                 Layer.Wholesale => 0.20m,
                 _ => 0m
             };
-
+            //
             return subtotal - (subtotal * discount);
         }
     }

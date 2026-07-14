@@ -11,7 +11,7 @@ namespace NorthWaveConsole.Services
                 reason = "Customer name is missing.";
                 return false;
             }
-
+            //
             if (order.ItemsCount == 0)
             {
                 reason = "Order has no items.";

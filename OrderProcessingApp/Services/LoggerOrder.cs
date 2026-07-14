@@ -5,7 +5,7 @@ using NorthWaveConsole.Models;
 namespace NorthWaveConsole.Services
 {
     public class LoggerOrder
-    {
+    { //
         private const string FileName = "app.log";
 
         public void Log(Order order, string message)

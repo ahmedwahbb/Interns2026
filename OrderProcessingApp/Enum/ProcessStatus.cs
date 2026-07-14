@@ -1,7 +1,7 @@
 namespace NorthWaveConsole.Enum
 {
     public enum Status
-    {
+    {//
         Pending,
         Validated,
         Priced,

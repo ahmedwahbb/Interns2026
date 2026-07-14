@@ -10,5 +10,6 @@ namespace NorthWaveConsole.Services
             Console.WriteLine($"[Notification] Order #{order.Id} for {order.CustomerName} " +
                                $"is now '{order.Status}'. Total: {order.Total:C}");
         }
+        //
     }
 }
