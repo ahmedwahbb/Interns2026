@@ -9,7 +9,7 @@ namespace NorthWaveConsole
     internal class Program
     {
         static void Main(string[] args)
-        {//
+        {///
             var validator = new Validation();
             var pricingService = new PricingOrder();
             var repository = new SaveOrder();

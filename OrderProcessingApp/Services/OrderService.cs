@@ -17,7 +17,7 @@ namespace NorthWaveConsole.Services
             NotifyOrder notificationService,
             LoggerOrder logger)
         {
-            //
+            ///
             _validator = validator;
             _pricingService = pricingService;
             _repository = repository;

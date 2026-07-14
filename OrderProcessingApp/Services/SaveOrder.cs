@@ -12,7 +12,7 @@ namespace NorthWaveConsole.Services
         {
             string line = $"[Order #{order.Id}] {order.CustomerName} ({order.CustomerType}) - " +
                           $"Items: {order.ItemsCount}, Total: {order.Total:C}, Status: {order.Status}";
-            //
+            ///
             File.AppendAllText(FileName, line + Environment.NewLine);
         }
     }
