@@ -13,11 +13,14 @@ namespace NorthWaveConsole
     {
       var validator = new OrderValidator();
       var pricingService = new OrderPricingService();
-      IOrderRepository repository = new FileOrderRepository();
+      var context = new FileContext();
+      
+      IOrderRepository repository = new FileOrderRepository(context);
+      IUnitOfWork unitOfWork = new FileUnitOfWork(context);
       INotificationService notificationService = new EmailNotificationService();
       IAppLogger logger = new FileLogger();
     
-      var service = new OrderService(validator, pricingService, repository, notificationService, logger);
+      var service = new OrderService(validator, pricingService, repository, notificationService, logger, unitOfWork);
 
       var customer1 = new Customer(1, "Ahmed Fathy", CustomerType.VIP);
       var customer2 = new Customer(2, "", CustomerType.Wholesale);

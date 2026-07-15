@@ -5,10 +5,14 @@ namespace NorthWaveConsole.Repository
 {
   public class FileOrderRepository : IOrderRepository
   {
-    public void Save(Order order)
+    private readonly FileContext _context;
+    public FileOrderRepository(FileContext context)
     {
-      File.AppendAllText("orders.txt",
-        $"{order.Id}," + $"{order.Customer.Name}," + $"{order.Customer.Type}," + $"{order.Total}," + $"{order.Status}" + $"{Environment.NewLine}");
+      _context = context;
+    }
+    public void Add(Order order)
+    {
+      _context.PendingOrders.Add(order);
     }
   }
 }

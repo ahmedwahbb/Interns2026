@@ -15,13 +15,15 @@ namespace NorthWaveConsole.Services
     private readonly IOrderRepository _repository;
     private readonly INotificationService _notificationService;
     private readonly IAppLogger _logger;
-    public OrderService(OrderValidator validator, OrderPricingService pricingService, IOrderRepository repository, INotificationService notificationService,  IAppLogger logger)
+    private readonly IUnitOfWork _unitOfWork;
+    public OrderService(OrderValidator validator, OrderPricingService pricingService, IOrderRepository repository, INotificationService notificationService,  IAppLogger logger, IUnitOfWork unitOfWork)
     {
       _validator = validator;
       _pricingService = pricingService;
       _repository = repository;
       _notificationService = notificationService;
       _logger = logger;
+      _unitOfWork = unitOfWork;
     }
 
     public void ProcessOrder(Order order)
@@ -40,7 +42,8 @@ namespace NorthWaveConsole.Services
 
       try
       {
-        _repository.Save(order);
+        _repository.Add(order);
+        _unitOfWork.Commit();
         _notificationService.SendOrderConfirmation(order);
         _logger.Log("Order processed: " + order.Id);
       }

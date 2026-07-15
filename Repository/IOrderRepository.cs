@@ -4,6 +4,6 @@ namespace NorthWaveConsole.Repository
 {
   public interface IOrderRepository
   {
-    void Save(Order order);
+    void Add(Order order);
   }
 }
