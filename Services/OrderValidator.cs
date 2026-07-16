@@ -1,4 +1,3 @@
-
 using NorthWaveConsole.Models;
 
 namespace NorthWaveConsole.Services
