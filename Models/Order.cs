@@ -6,11 +6,8 @@ namespace NorthWaveConsole.Models
 {
     public class Order
     {
-        private static int _nextId = 1;
-
         public int Id { get; private set; }
-        public string CustomerName { get; private set; }
-        public Layer CustomerType { get; private set; }
+        public Customer Customer { get; private set; }
 
         private readonly List<OrderItem> _items = new();
         public IReadOnlyList<OrderItem> Items => _items;
@@ -21,11 +18,10 @@ namespace NorthWaveConsole.Models
         public decimal Subtotal => _items.Sum(item => item.Price * item.Qty);
         public string FailureReason { get; private set; }
 
-        public Order(string customerName, Layer customerType)
+        public Order(int id, Customer customer)
         {
-            Id = _nextId++;
-            CustomerName = customerName;
-            CustomerType = customerType;
+            Id = id;
+            Customer = customer;
         }
 
         public void AddItem(OrderItem item)
@@ -42,9 +38,7 @@ namespace NorthWaveConsole.Models
         }
 
         public void MarkSaved() => Status = Status.Saved;
-
         public void MarkNotified() => Status = Status.Notified;
-
         public void MarkCompleted() => Status = Status.Completed;
 
         public void MarkFailed(string reason)

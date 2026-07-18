@@ -10,7 +10,7 @@ namespace NorthWaveConsole.Repositories
 
         public void Save(Order order)
         {
-            string line = $"[Order #{order.Id}] {order.CustomerName} ({order.CustomerType}) - " +
+            string line = $"[Order #{order.Id}] {order.Customer.Name} ({order.Customer.Type}) - " +
                           $"Items: {order.ItemsCount}, Total: {order.Total:C}, Status: {order.Status}";
 
             File.AppendAllText(FileName, line + Environment.NewLine);

@@ -5,18 +5,18 @@ namespace NorthWaveConsole.Services
 {
     public class OrderService
     {
-        private readonly Validation _validator;
-        private readonly PricingOrder _pricingService;
+        private readonly IOrderValidator _validator;
+        private readonly IOrderPricingService _pricingService;
         private readonly IOrderRepository _repository;
-        private readonly NotifyOrder _notificationService;
-        private readonly LoggerOrder _logger;
+        private readonly IOrderNotifier _notificationService;
+        private readonly IOrderLogger _logger;
 
         public OrderService(
-            Validation validator,
-            PricingOrder pricingService,
+            IOrderValidator validator,
+            IOrderPricingService pricingService,
             IOrderRepository repository,
-            NotifyOrder notificationService,
-            LoggerOrder logger)
+            IOrderNotifier notificationService,
+            IOrderLogger logger)
         {
             _validator = validator;
             _pricingService = pricingService;

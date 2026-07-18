@@ -10,19 +10,22 @@ namespace NorthWaveConsole
     {
         static void Main(string[] args)
         {
-            var validator = new Validation();
-            var pricingService = new PricingOrder();
+            var idGenerator = new OrderIdGenerator();
+            IOrderValidator validator = new Validation();
+            IOrderPricingService pricingService = new PricingOrder();
             IOrderRepository repository = new FileOrderRepository();
-            var notificationService = new NotifyOrder();
-            var logger = new LoggerOrder();
+            IOrderNotifier notificationService = new NotifyOrder();
+            IOrderLogger logger = new LoggerOrder();
 
             var service = new OrderService(validator, pricingService, repository, notificationService, logger);
 
-            var order1 = new Order("Khaled Yasser", Layer.Normal);
+            var customer1 = new Customer("Khaled Yasser", Layer.Normal);
+            var order1 = new Order(idGenerator.Next(), customer1);
             order1.AddItem(new OrderItem("Server Rack Unit", 450.00m, 7));
             order1.AddItem(new OrderItem("Laptop", 70.00m, 2));
 
-            var order2 = new Order("", Layer.Employee);
+            var customer2 = new Customer("", Layer.Employee);
+            var order2 = new Order(idGenerator.Next(), customer2);
 
             service.ProcessOrder(order1);
             service.ProcessOrder(order2);

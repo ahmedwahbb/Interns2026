@@ -1,22 +1,22 @@
+using NorthWaveConsole.Models;
+using NorthWaveConsole.Repositories;
 using System;
 using System.IO;
-using NorthWaveConsole.Models;
 
 namespace NorthWaveConsole.Services
 {
-    public class LoggerOrder
+    public class LoggerOrder : IOrderLogger
     {
         private const string FileName = "app.log";
 
         public void Log(Order order, string message)
         {
-            string line = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} | Order #{order.Id} | {order.Status} | {message}";
-            File.AppendAllText(FileName, line + Environment.NewLine);
+            File.AppendAllText(FileName, $"{DateTime.Now}: [Order #{order.Id}] {message}{Environment.NewLine}");
         }
 
-        public void LogError(Order order, string errorMessage)
+        public void LogError(Order order, string reason)
         {
-            Log(order, $"ERROR - {errorMessage}");
+            File.AppendAllText(FileName, $"{DateTime.Now}: [Order #{order.Id}] FAILED - {reason}{Environment.NewLine}");
         }
     }
 }
