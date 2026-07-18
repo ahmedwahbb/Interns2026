@@ -1,46 +1,37 @@
 using System;
+using NorthWaveConsole.Enum;
 using NorthWaveConsole.Models;
+using NorthWaveConsole.Repositories;
 using NorthWaveConsole.Services;
 
 namespace NorthWaveConsole
 {
-    class Program
+    internal class Program
     {
         static void Main(string[] args)
         {
-            var service = new OrderService();
+            var idGenerator = new OrderIdGenerator();
+            IOrderValidator validator = new Validation();
+            IOrderPricingService pricingService = new PricingOrder();
+            IOrderRepository repository = new FileOrderRepository();
+            IOrderNotifier notificationService = new NotifyOrder();
+            IOrderLogger logger = new LoggerOrder();
 
-            var order1 = new Order
-            {
-                CustomerName = "Ahmed Fathy",
-                CustomerType = "VIP",
-                Items = new System.Collections.Generic.List<OrderItem>
-                {
-                    new OrderItem { ProductName = "Server Rack Unit", Price = 450.00m, Qty = 2 },
-                    new OrderItem { ProductName = "Network Switch",   Price = 120.00m, Qty = 1 },
-                }
-            };
+            var service = new OrderService(validator, pricingService, repository, notificationService, logger);
 
-            var order2 = new Order
-            {
-                CustomerName = "",
-                CustomerType = "Wholesale",
-                Items = new System.Collections.Generic.List<OrderItem>()
-            };
+            var customer1 = new Customer("Khaled Yasser", Layer.Normal);
+            var order1 = new Order(idGenerator.Next(), customer1);
+            order1.AddItem(new OrderItem("Server Rack Unit", 450.00m, 7));
+            order1.AddItem(new OrderItem("Laptop", 70.00m, 2));
 
-            bool order1Ok = service.ProcessOrder(order1);
-            bool order2Ok = service.ProcessOrder(order2);
+            var customer2 = new Customer("", Layer.Employee);
+            var order2 = new Order(idGenerator.Next(), customer2);
 
-            // Now you know immediately, right here, without opening OrderService.cs:
-            Console.WriteLine(order1Ok
-                ? $"Order 1: SUCCESS (Id={order1.Id}, Total={order1.Total:C})"
-                : $"Order 1: FAILED - {order1.FailureReason}");
-
-            Console.WriteLine(order2Ok
-                ? $"Order 2: SUCCESS (Id={order2.Id}, Total={order2.Total:C})"
-                : $"Order 2: FAILED - {order2.FailureReason}");
+            service.ProcessOrder(order1);
+            service.ProcessOrder(order2);
 
             Console.WriteLine("Done. Check orders.txt and app.log in the output folder.");
+            Console.WriteLine("Ask yourself: how would YOU know order2 failed, right now, without reading this source code?");
         }
     }
 }
