@@ -1,90 +1,59 @@
-using System;
-using System.IO;
+using NorthWaveConsole.Interfaces;
 using NorthWaveConsole.Models;
 
 namespace NorthWaveConsole.Services
 {
-   
     public class OrderService
     {
-        private static int _nextId = 1;
+        private readonly IValidator _validator;
+        private readonly IPricingService _pricingService;
+        private readonly IUnitOfWork _unitOfWork;
+        private readonly INotificationService _notificationService;
+        private readonly IOrderLogger _logger;
 
-        public decimal CalculateTotal(Order o)
+        public OrderService(
+            IValidator validator,
+            IPricingService pricingService,
+            IUnitOfWork unitOfWork,
+            INotificationService notificationService,
+            IOrderLogger logger)
         {
-            decimal total = 0;
-            for (int i = 0; i < o.Items.Count; i++)
-            {
-                total = total + (o.Items[i].Price * o.Items[i].Qty);
-            }
-
-
-            if (o.CustomerType == "VIP")
-            {
-                total = total * 0.8m;
-            }
-            else if (o.CustomerType == "Wholesale")
-            {
-                total = total * 0.85m;
-            }
-            else if (o.CustomerType == "Employee")
-            {
-                total = total * 0.5m;
-            }
-            else
-            {
-            }
-
-            o.Total = total;
-            return total;
+            _validator = validator;
+            _pricingService = pricingService;
+            _unitOfWork = unitOfWork;
+            _notificationService = notificationService;
+            _logger = logger;
         }
 
-        public void ProcessOrder(Order o)
+        public void ProcessOrder(Order order)
         {
-            
-            if (o.Items.Count > 0)
+            if (!_validator.IsValid(order, out string reason))
             {
-                if (o.CustomerName != null)
-                {
-                    if (o.CustomerName != "")
-                    {
-                        o.Id = _nextId;
-                        _nextId = _nextId + 1;
-                        o.Status = "New";
-
-                        CalculateTotal(o);
-
-                        try
-                        {
-                            SaveToFile(o);
-                            SendConfirmationEmail(o);
-                            LogToFile("Order processed: " + o.Id);
-                        }
-                        catch (Exception)
-                        {
-                          
-                        }
-                    }
-                }
+                order.MarkFailed(reason);
+                _logger.LogError(order, reason);
+                return;
             }
+
+            order.MarkValidated();
+
+            decimal total = _pricingService.CalculateTotal(order);
+            order.SetTotal(total);
+
+            // مش بنحفظ فورًا، بس بنضيف الـ order للـ Unit of Work
+            _unitOfWork.Orders.Add(order);
+            order.MarkSaved();
+
+            _notificationService.Notify(order);
+            order.MarkNotified();
+
+            order.MarkCompleted();
+            _logger.Log(order, "Order processed successfully.");
         }
 
-        private void SaveToFile(Order o)
+        // بتعمل commit لكل الـ orders اللي اتضافت للـ Unit of Work مرة واحدة
+        public int CommitOrders()
         {
-           
-            File.AppendAllText("orders.txt",
-                $"{o.Id},{o.CustomerName},{o.CustomerType},{o.Total},{o.Status}{Environment.NewLine}");
-        }
-
-        private void SendConfirmationEmail(Order o)
-        {
-           
-            Console.WriteLine($"[EMAIL] To: {o.CustomerName} - Your order #{o.Id} totalling {o.Total:C} was received.");
-        }
-
-        private void LogToFile(string message)
-        {
-            
-            File.AppendAllText("app.log", $"{DateTime.Now}: {message}{Environment.NewLine}");
+            return _unitOfWork.Complete();
         }
     }
 }
