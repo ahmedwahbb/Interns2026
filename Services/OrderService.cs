@@ -4,87 +4,143 @@ using NorthWaveConsole.Models;
 
 namespace NorthWaveConsole.Services
 {
-   
     public class OrderService
     {
         private static int _nextId = 1;
 
-        public decimal CalculateTotal(Order o)
+
+        public class Customer
+        {
+            public virtual decimal GetDiscountMultiplier()
+            {
+                return 1.0m;
+            }
+        }
+
+        public class VipCustomer : Customer
+        {
+            public override decimal GetDiscountMultiplier()
+            {
+                return 0.8m;
+            }
+        }
+
+        public class WholesaleCustomer : Customer
+        {
+            public override decimal GetDiscountMultiplier()
+            {
+                return 0.85m;
+            }
+        }
+
+        public class EmployeeCustomer : Customer
+        {
+            public override decimal GetDiscountMultiplier()
+            {
+                return 0.5m;
+            }
+        }
+
+
+
+        public decimal CalculateSubtotal(Order o)
         {
             decimal total = 0;
+
             for (int i = 0; i < o.Items.Count; i++)
             {
-                total = total + (o.Items[i].Price * o.Items[i].Qty);
+                total += o.Items[i].GetSubtotal();
             }
 
-
-            if (o.CustomerType == "VIP")
-            {
-                total = total * 0.8m;
-            }
-            else if (o.CustomerType == "Wholesale")
-            {
-                total = total * 0.85m;
-            }
-            else if (o.CustomerType == "Employee")
-            {
-                total = total * 0.5m;
-            }
-            else
-            {
-            }
-
-            o.Total = total;
             return total;
         }
 
-        public void ProcessOrder(Order o)
+
+
+        public decimal CalculateTotal(Order o, Customer customer)
         {
-            
-            if (o.Items.Count > 0)
-            {
-                if (o.CustomerName != null)
-                {
-                    if (o.CustomerName != "")
-                    {
-                        o.Id = _nextId;
-                        _nextId = _nextId + 1;
-                        o.Status = "New";
+            decimal subtotal = CalculateSubtotal(o);
 
-                        CalculateTotal(o);
+            decimal discountMultiplier =
+                customer.GetDiscountMultiplier();
 
-                        try
-                        {
-                            SaveToFile(o);
-                            SendConfirmationEmail(o);
-                            LogToFile("Order processed: " + o.Id);
-                        }
-                        catch (Exception)
-                        {
-                          
-                        }
-                    }
-                }
-            }
+            decimal finalTotal = subtotal * discountMultiplier;
+
+            return finalTotal;
         }
 
-        private void SaveToFile(Order o)
+//////////////////////////////////////////////////////////////////////////////////
+
+   public bool ProcessOrder(Order o, Customer customer)
+{
+    if (o.Items.Count == 0)
+    {
+        o.SetFailureReason("Order has no items.");
+        return false;
+    }
+
+    if (string.IsNullOrWhiteSpace(o.CustomerName))
+    {
+        o.SetFailureReason("Customer name is required.");
+        return false;
+    }
+
+    o.SetId(_nextId);
+    _nextId++;
+
+    o.SetStatus("New");
+
+    decimal total = CalculateTotal(o, customer);
+    o.SetTotal(total);
+
+    try
+    {
+        SaveToFile(o, total);
+        SendConfirmationEmail(o, total);
+        LogToFile("Order processed: " + o.Id);
+
+        return true;
+    }
+    catch (Exception ex)
+    {
+        o.SetFailureReason(ex.Message);
+        return false;
+    }
+}
+
+
+/////////////////////////////////////////////////////////////////////////
+        private void SaveToFile(Order o, decimal total)
         {
-           
-            File.AppendAllText("orders.txt",
-                $"{o.Id},{o.CustomerName},{o.CustomerType},{o.Total},{o.Status}{Environment.NewLine}");
+            File.AppendAllText(
+                "orders.txt",
+                $"{o.Id}," +
+                $"{o.CustomerName}," +
+                $"{o.CustomerType}," +
+                $"{total}," +
+                $"{o.Status}" +
+                $"{Environment.NewLine}"
+            );
         }
 
-        private void SendConfirmationEmail(Order o)
+
+
+        private void SendConfirmationEmail(Order o, decimal total)
         {
-           
-            Console.WriteLine($"[EMAIL] To: {o.CustomerName} - Your order #{o.Id} totalling {o.Total:C} was received.");
+            Console.WriteLine(
+                $"[EMAIL] To: {o.CustomerName} - " +
+                $"Your order #{o.Id} totalling {total:C} was received."
+            );
         }
+
+
 
         private void LogToFile(string message)
         {
-            
-            File.AppendAllText("app.log", $"{DateTime.Now}: {message}{Environment.NewLine}");
+            File.AppendAllText(
+                "app.log",
+                $"{DateTime.Now}: {message}{Environment.NewLine}"
+            );
         }
     }
 }

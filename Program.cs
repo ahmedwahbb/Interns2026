@@ -10,37 +10,62 @@ namespace NorthWaveConsole
         {
             var service = new OrderService();
 
-            var order1 = new Order
-            {
-                CustomerName = "Ahmed Fathy",
-                CustomerType = "VIP",
-                Items = new System.Collections.Generic.List<OrderItem>
-                {
-                    new OrderItem { ProductName = "Server Rack Unit", Price = 450.00m, Qty = 2 },
-                    new OrderItem { ProductName = "Network Switch",   Price = 120.00m, Qty = 1 },
-                }
-            };
+            
 
-            var order2 = new Order
-            {
-                CustomerName = "",
-                CustomerType = "Wholesale",
-                Items = new System.Collections.Generic.List<OrderItem>()
-            };
+            var order1 = new Order(
+                "Ahmed Fathy",
+                "VIP"
+            );
 
-            bool order1Ok = service.ProcessOrder(order1);
-            bool order2Ok = service.ProcessOrder(order2);
+            order1.AddItem(
+                new OrderItem(
+                    "Server Rack Unit",
+                    450.00m,
+                    2
+                )
+            );
 
-            // Now you know immediately, right here, without opening OrderService.cs:
-            Console.WriteLine(order1Ok
-                ? $"Order 1: SUCCESS (Id={order1.Id}, Total={order1.Total:C})"
-                : $"Order 1: FAILED - {order1.FailureReason}");
+            order1.AddItem(
+                new OrderItem(
+                    "Network Switch",
+                    120.00m,
+                    1
+                )
+            );
 
-            Console.WriteLine(order2Ok
-                ? $"Order 2: SUCCESS (Id={order2.Id}, Total={order2.Total:C})"
-                : $"Order 2: FAILED - {order2.FailureReason}");
+            OrderService.Customer customer1 = new OrderService.VipCustomer();
 
-            Console.WriteLine("Done. Check orders.txt and app.log in the output folder.");
+
+            
+            var order2 = new Order(
+                "",
+                "Wholesale"
+            );
+
+            OrderService.Customer customer2 = new OrderService.WholesaleCustomer();
+
+
+            bool order1Ok = service.ProcessOrder(order1, customer1);
+
+            bool order2Ok = service.ProcessOrder(order2, customer2);
+
+
+
+            Console.WriteLine(
+                order1Ok
+                    ? $"Order 1: SUCCESS (Id={order1.Id}, Total={order1.Total:C})"
+                    : $"Order 1: FAILED - {order1.FailureReason}"
+            );
+
+            Console.WriteLine(
+                order2Ok
+                    ? $"Order 2: SUCCESS (Id={order2.Id}, Total={order2.Total:C})"
+                    : $"Order 2: FAILED - {order2.FailureReason}"
+            );
+
+            Console.WriteLine(
+                "Done. Check orders.txt and app.log in the output folder."
+            );
         }
     }
 }
