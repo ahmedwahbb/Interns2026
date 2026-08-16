@@ -1,6 +1,9 @@
 using System;
 using System.IO;
 using NorthWaveConsole.Models;
+using NorthWaveConsole.Services.FileLogger;
+using NorthWaveConsole.Services.FileOrderRepository;
+using NorthWaveConsole.Services.Notifier;
 
 namespace NorthWaveConsole.Services
 {
@@ -8,64 +11,56 @@ namespace NorthWaveConsole.Services
     public class OrderService
     {
         private static int _nextId = 1;
+        private readonly IOrderRepository _orderRepository;
+        private readonly IFileLoggerService _fileLoggerService;
+        private readonly INotifierService _notifierService;
 
-        public decimal CalculateTotal(Order o)
+        public OrderService(IOrderRepository orderRepository, IFileLoggerService fileLoggerService, INotifierService notifierService)
+        {
+            _orderRepository = orderRepository;
+            _fileLoggerService = fileLoggerService;
+            _notifierService = notifierService;
+        }
+
+        public decimal CalculateTotal(Order order)
         {
             decimal total = 0;
-            for (int i = 0; i < o.Items.Count; i++)
+            for (int i = 0; i < order.Items.Count; i++)
             {
-                total = total + (o.Items[i].Price * o.Items[i].Qty);
+                total = total + (order.Items[i].Price * order.Items[i].Qty);
             }
-
-
-            if (o.CustomerType == "VIP")
-            {
+            if (order.CustomerType == CustomerType.VIP)
                 total = total * 0.8m;
-            }
-            else if (o.CustomerType == "Wholesale")
-            {
+            else if (order.CustomerType == CustomerType.Wholesale)
                 total = total * 0.85m;
-            }
-            else if (o.CustomerType == "Employee")
-            {
+            else if (order.CustomerType == CustomerType.Employee)
                 total = total * 0.5m;
-            }
-            else
-            {
-            }
 
-            o.Total = total;
+            order.SetTotal(total);
             return total;
         }
 
-        public void ProcessOrder(Order o)
+        public bool ProcessOrder(Order o)
         {
-            
-            if (o.Items.Count > 0)
+            if (o.Items.Count <= 0)
+                throw new ArgumentException("Order must contain at least one item.");
+            if (string.IsNullOrWhiteSpace(o.CustomerName))
+                throw new ArgumentException("Customer name is required.");
+            o.AssignId(_nextId);
+            _nextId++;
+            CalculateTotal(o);
+            try
             {
-                if (o.CustomerName != null)
-                {
-                    if (o.CustomerName != "")
-                    {
-                        o.Id = _nextId;
-                        _nextId = _nextId + 1;
-                        o.Status = "New";
-
-                        CalculateTotal(o);
-
-                        try
-                        {
-                            SaveToFile(o);
-                            SendConfirmationEmail(o);
-                            LogToFile("Order processed: " + o.Id);
-                        }
-                        catch (Exception)
-                        {
-                          
-                        }
-                    }
-                }
+                _orderRepository.Save(o);
+                _notifierService.SendConfirmationEmail(o);
+                _fileLoggerService.Log("Order processed: " + o.Id);
             }
+            catch (Exception ex)
+            {
+                _fileLoggerService.Log($"Error occurred while processing order: {o.Id} {Environment.NewLine}{ex.Message}");
+                return false;
+            }
+            return true;
         }
     }
 }
