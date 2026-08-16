@@ -67,24 +67,5 @@ namespace NorthWaveConsole.Services
                 }
             }
         }
-
-        private void SaveToFile(Order o)
-        {
-           
-            File.AppendAllText("orders.txt",
-                $"{o.Id},{o.CustomerName},{o.CustomerType},{o.Total},{o.Status}{Environment.NewLine}");
-        }
-
-        private void SendConfirmationEmail(Order o)
-        {
-           
-            Console.WriteLine($"[EMAIL] To: {o.CustomerName} - Your order #{o.Id} totalling {o.Total:C} was received.");
-        }
-
-        private void LogToFile(string message)
-        {
-            
-            File.AppendAllText("app.log", $"{DateTime.Now}: {message}{Environment.NewLine}");
-        }
     }
 }
