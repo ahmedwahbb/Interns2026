@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using NorthWaveConsole.Models;
+using NorthWaveConsole.Services.Discounts;
 using NorthWaveConsole.Services.FileLogger;
 using NorthWaveConsole.Services.FileOrderRepository;
 using NorthWaveConsole.Services.Notifier;
@@ -14,12 +15,14 @@ namespace NorthWaveConsole.Services
         private readonly IOrderRepository _orderRepository;
         private readonly IFileLoggerService _fileLoggerService;
         private readonly INotifierService _notifierService;
+        private readonly IDiscountStrategyFactory _discountStrategyFactory;
 
-        public OrderService(IOrderRepository orderRepository, IFileLoggerService fileLoggerService, INotifierService notifierService)
+        public OrderService(IOrderRepository orderRepository, IFileLoggerService fileLoggerService, INotifierService notifierService, IDiscountStrategyFactory discountStrategyFactory)
         {
             _orderRepository = orderRepository;
             _fileLoggerService = fileLoggerService;
             _notifierService = notifierService;
+            _discountStrategyFactory = discountStrategyFactory;
         }
 
         public decimal CalculateTotal(Order order)
@@ -27,15 +30,9 @@ namespace NorthWaveConsole.Services
             decimal total = 0;
             for (int i = 0; i < order.Items.Count; i++)
             {
-                total = total + (order.Items[i].Price * order.Items[i].Qty);
+                total += (order.Items[i].Price * order.Items[i].Qty);
             }
-            if (order.CustomerType == CustomerType.VIP)
-                total = total * 0.8m;
-            else if (order.CustomerType == CustomerType.Wholesale)
-                total = total * 0.85m;
-            else if (order.CustomerType == CustomerType.Employee)
-                total = total * 0.5m;
-
+            total = _discountStrategyFactory.GetStrategy(order.CustomerType).Apply(total);
             order.SetTotal(total);
             return total;
         }
