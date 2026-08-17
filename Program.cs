@@ -1,6 +1,9 @@
-using System;
 using NorthWaveConsole.Models;
 using NorthWaveConsole.Services;
+using NorthWaveConsole.Services.Discounts;
+using NorthWaveConsole.Services.FileLogger;
+using NorthWaveConsole.Services.FileOrderRepository;
+using NorthWaveConsole.Services.Notifier;
 
 namespace NorthWaveConsole
 {
@@ -8,39 +11,40 @@ namespace NorthWaveConsole
     {
         static void Main(string[] args)
         {
-            var service = new OrderService();
+            var repository = new FileRepository();
+            var notification = new NotifierService();
+            var logger = new FileLoggerService();
+            var discountFactory = new DiscountStrategyFactory();
+
+            var service = new OrderService(
+                repository,
+                logger,
+                notification,
+                discountFactory
+            );
+
 
             var order1 = new Order
-            {
-                CustomerName = "Ahmed Fathy",
-                CustomerType = "VIP",
-                Items = new System.Collections.Generic.List<OrderItem>
-                {
-                    new OrderItem { ProductName = "Server Rack Unit", Price = 450.00m, Qty = 2 },
-                    new OrderItem { ProductName = "Network Switch",   Price = 120.00m, Qty = 1 },
-                }
-            };
+            (
+                customerName: "Ahmed Fathy",
+                customerType: CustomerType.VIP
+            );
+            order1.AddItem(new OrderItem(productName: "Server Rack Unit", price: 450.00m, quantity: 2));
+            order1.AddItem(new OrderItem(productName: "Network Switch", price: 120.00m, quantity: 1));
+            
+            var order2 = new Order(
+                customerName: "Mohamed Saeed",
+                customerType: CustomerType.Wholesale
+            );
+            order2.AddItem(new OrderItem(productName: "Router", price: 200.00m, quantity: 1));
 
-            var order2 = new Order
-            {
-                CustomerName = "",
-                CustomerType = "Wholesale",
-                Items = new System.Collections.Generic.List<OrderItem>()
-            };
 
             bool order1Ok = service.ProcessOrder(order1);
+            if (!order1Ok)
+                Console.WriteLine("Order 1 failed");
             bool order2Ok = service.ProcessOrder(order2);
-
-            // Now you know immediately, right here, without opening OrderService.cs:
-            Console.WriteLine(order1Ok
-                ? $"Order 1: SUCCESS (Id={order1.Id}, Total={order1.Total:C})"
-                : $"Order 1: FAILED - {order1.FailureReason}");
-
-            Console.WriteLine(order2Ok
-                ? $"Order 2: SUCCESS (Id={order2.Id}, Total={order2.Total:C})"
-                : $"Order 2: FAILED - {order2.FailureReason}");
-
-            Console.WriteLine("Done. Check orders.txt and app.log in the output folder.");
+            if (!order2Ok)
+                Console.WriteLine("Order 2 failed");
         }
     }
 }
