@@ -8,9 +8,14 @@ namespace NorthWaveConsole.Models
 
     public OrderItem(string productName, decimal price, int qty)
     {
+
         ProductName = productName;
         Price = price;
         Qty = qty;
+        if (qty<0 || price < 0)
+        {
+            throw new ArgumentException("Quantity and price must be positive numbers.", nameof(qty));
+        }
     }
 
     public decimal GetSubtotal()

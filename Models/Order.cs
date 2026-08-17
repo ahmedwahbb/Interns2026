@@ -6,12 +6,10 @@ namespace NorthWaveConsole.Models
     {
         public int Id { get; private set; }
 
-        public string CustomerName { get; private set; }
+        public Customer Customer { get; private set; }
 
-        public string CustomerType { get; private set; }
-
-        public List<OrderItem> Items { get; private set; }
-
+        private readonly List<OrderItem> _items = new List<OrderItem>();
+        public IReadOnlyList<OrderItem> Items => _items;
         public string Status { get; private set; }
 
         public decimal Total { get; private set; }
@@ -19,12 +17,11 @@ namespace NorthWaveConsole.Models
         public string FailureReason { get; private set; }
 
 
-        public Order(string customerName, string customerType)
+        public Order(Customer customer)
         {
-            CustomerName = customerName;
-            CustomerType = customerType;
-
-            Items = new List<OrderItem>();
+            Customer = customer;
+            
+            _items = new List<OrderItem>();
 
             Status = "Pending";
             Total = 0;
@@ -34,15 +31,17 @@ namespace NorthWaveConsole.Models
 
         public void AddItem(OrderItem item)
         {
-            Items.Add(item);
+            if (item == null)
+        return;
+            _items.Add(item);
         }
 
 
-        public decimal GetSubtotal()
+        private decimal GetSubtotal()
         {
             decimal total = 0;
 
-            foreach (OrderItem item in Items)
+            foreach (OrderItem item in _items)
             {
                 total += item.GetSubtotal();
             }
@@ -51,25 +50,25 @@ namespace NorthWaveConsole.Models
         }
 
 
-        public decimal GetTotal(decimal discountMultiplier)
+        internal decimal GetTotal(decimal discountMultiplier)
         {
             return GetSubtotal() * discountMultiplier;
         }
 
 
-        public void SetId(int id)
+        internal void SetId(int id)
         {
             Id = id;
         }
 
 
-        public void SetStatus(string status)
+        internal void SetStatus(string status)
         {
             Status = status;
         }
 
 
-        public void SetTotal(decimal total)
+        internal void SetTotal(decimal total)
         {
             Total = total;
         }

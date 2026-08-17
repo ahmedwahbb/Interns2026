@@ -9,114 +9,64 @@ namespace NorthWaveConsole.Services
         private static int _nextId = 1;
 
 
-        public class Customer
-        {
-            public virtual decimal GetDiscountMultiplier()
-            {
-                return 1.0m;
-            }
-        }
-
-        public class VipCustomer : Customer
-        {
-            public override decimal GetDiscountMultiplier()
-            {
-                return 0.8m;
-            }
-        }
-
-        public class WholesaleCustomer : Customer
-        {
-            public override decimal GetDiscountMultiplier()
-            {
-                return 0.85m;
-            }
-        }
-
-        public class EmployeeCustomer : Customer
-        {
-            public override decimal GetDiscountMultiplier()
-            {
-                return 0.5m;
-            }
-        }
-
-
-
-        public decimal CalculateSubtotal(Order o)
-        {
-            decimal total = 0;
-
-            for (int i = 0; i < o.Items.Count; i++)
-            {
-                total += o.Items[i].GetSubtotal();
-            }
-
-            return total;
-        }
-
-
-
         public decimal CalculateTotal(Order o, Customer customer)
         {
-            decimal subtotal = CalculateSubtotal(o);
-
             decimal discountMultiplier =
                 customer.GetDiscountMultiplier();
 
-            decimal finalTotal = subtotal * discountMultiplier;
-
-            return finalTotal;
+            return o.GetTotal(discountMultiplier);
         }
 
-//////////////////////////////////////////////////////////////////////////////////
 
-   public bool ProcessOrder(Order o, Customer customer)
-{
-    if (o.Items.Count == 0)
-    {
-        o.SetFailureReason("Order has no items.");
-        return false;
-    }
+        public bool ProcessOrder(Order o, Customer customer)
+        {
+            if (o.Items.Count == 0)
+            {
+                o.SetFailureReason("Order has no items.");
+                return false;
+            }
 
-    if (string.IsNullOrWhiteSpace(o.CustomerName))
-    {
-        o.SetFailureReason("Customer name is required.");
-        return false;
-    }
+            if (customer == null ||
+                string.IsNullOrWhiteSpace(customer.Name))
+            {
+                o.SetFailureReason("Customer name is required.");
+                return false;
+            }
 
-    o.SetId(_nextId);
-    _nextId++;
+            o.SetId(_nextId);
+            _nextId++;
 
-    o.SetStatus("New");
+            o.SetStatus("New");
 
-    decimal total = CalculateTotal(o, customer);
-    o.SetTotal(total);
+            decimal total = CalculateTotal(o, customer);
+            o.SetTotal(total);
 
-    try
-    {
-        SaveToFile(o, total);
-        SendConfirmationEmail(o, total);
-        LogToFile("Order processed: " + o.Id);
+            try
+            {
+                SaveToFile(o, total, customer);
+                SendConfirmationEmail(o, total, customer);
+                LogToFile("Order processed: " + o.Id);
 
-        return true;
-    }
-    catch (Exception ex)
-    {
-        o.SetFailureReason(ex.Message);
-        return false;
-    }
-}
+                return true;
+            }
+            catch (Exception ex)
+            {
+                o.SetFailureReason(ex.Message);
+                return false;
+            }
+        }
 
 
-/////////////////////////////////////////////////////////////////////////
-        private void SaveToFile(Order o, decimal total)
+        private void SaveToFile(
+            Order o,
+            decimal total,
+            Customer customer)
         {
             File.AppendAllText(
                 "orders.txt",
                 $"{o.Id}," +
-                $"{o.CustomerName}," +
-                $"{o.CustomerType}," +
+                $"{customer.Name}," +
+                $"{customer.Type}," +
                 $"{total}," +
                 $"{o.Status}" +
                 $"{Environment.NewLine}"
@@ -124,15 +74,16 @@ namespace NorthWaveConsole.Services
         }
 
 
-
-        private void SendConfirmationEmail(Order o, decimal total)
+        private void SendConfirmationEmail(
+            Order o,
+            decimal total,
+            Customer customer)
         {
             Console.WriteLine(
-                $"[EMAIL] To: {o.CustomerName} - " +
+                $"[EMAIL] To: {customer.Name} - " +
                 $"Your order #{o.Id} totalling {total:C} was received."
             );
         }
-
 
 
         private void LogToFile(string message)
