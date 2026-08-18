@@ -4,87 +4,94 @@ using NorthWaveConsole.Models;
 
 namespace NorthWaveConsole.Services
 {
-   
     public class OrderService
     {
         private static int _nextId = 1;
 
-        public decimal CalculateTotal(Order o)
+
+        public decimal CalculateTotal(Order o, Customer customer)
         {
-            decimal total = 0;
-            for (int i = 0; i < o.Items.Count; i++)
-            {
-                total = total + (o.Items[i].Price * o.Items[i].Qty);
-            }
+            decimal discountMultiplier =
+                customer.GetDiscountMultiplier();
 
-
-            if (o.CustomerType == "VIP")
-            {
-                total = total * 0.8m;
-            }
-            else if (o.CustomerType == "Wholesale")
-            {
-                total = total * 0.85m;
-            }
-            else if (o.CustomerType == "Employee")
-            {
-                total = total * 0.5m;
-            }
-            else
-            {
-            }
-
-            o.Total = total;
-            return total;
+            return o.GetTotal(discountMultiplier);
         }
 
-        public void ProcessOrder(Order o)
+
+        public bool ProcessOrder(Order o, Customer customer)
         {
-            
-            if (o.Items.Count > 0)
+            if (o.Items.Count == 0)
             {
-                if (o.CustomerName != null)
-                {
-                    if (o.CustomerName != "")
-                    {
-                        o.Id = _nextId;
-                        _nextId = _nextId + 1;
-                        o.Status = "New";
+                o.SetFailureReason("Order has no items.");
+                return false;
+            }
 
-                        CalculateTotal(o);
+            if (customer == null ||
+                string.IsNullOrWhiteSpace(customer.Name))
+            {
+                o.SetFailureReason("Customer name is required.");
+                return false;
+            }
 
-                        try
-                        {
-                            SaveToFile(o);
-                            SendConfirmationEmail(o);
-                            LogToFile("Order processed: " + o.Id);
-                        }
-                        catch (Exception)
-                        {
-                          
-                        }
-                    }
-                }
+            o.SetId(_nextId);
+            _nextId++;
+
+            o.SetStatus("New");
+
+            decimal total = CalculateTotal(o, customer);
+            o.SetTotal(total);
+
+            try
+            {
+                SaveToFile(o, total, customer);
+                SendConfirmationEmail(o, total, customer);
+                LogToFile("Order processed: " + o.Id);
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                o.SetFailureReason(ex.Message);
+                return false;
             }
         }
 
-        private void SaveToFile(Order o)
+
+        private void SaveToFile(
+            Order o,
+            decimal total,
+            Customer customer)
         {
-           
-            File.AppendAllText("orders.txt",
-                $"{o.Id},{o.CustomerName},{o.CustomerType},{o.Total},{o.Status}{Environment.NewLine}");
+            File.AppendAllText(
+                "orders.txt",
+                $"{o.Id}," +
+                $"{customer.Name}," +
+                $"{customer.Type}," +
+                $"{total}," +
+                $"{o.Status}" +
+                $"{Environment.NewLine}"
+            );
         }
 
-        private void SendConfirmationEmail(Order o)
+
+        private void SendConfirmationEmail(
+            Order o,
+            decimal total,
+            Customer customer)
         {
-           
-            Console.WriteLine($"[EMAIL] To: {o.CustomerName} - Your order #{o.Id} totalling {o.Total:C} was received.");
+            Console.WriteLine(
+                $"[EMAIL] To: {customer.Name} - " +
+                $"Your order #{o.Id} totalling {total:C} was received."
+            );
         }
+
 
         private void LogToFile(string message)
         {
-            
-            File.AppendAllText("app.log", $"{DateTime.Now}: {message}{Environment.NewLine}");
+            File.AppendAllText(
+                "app.log",
+                $"{DateTime.Now}: {message}{Environment.NewLine}"
+            );
         }
     }
 }
